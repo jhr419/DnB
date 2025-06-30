@@ -15,9 +15,6 @@ int Vertical_out, Velocity_out, Turn_out;
   */
 Car newCar(void) {
     Car c = {
-            .isObstacleAvoidanceOn = FALSE,    // 障碍规避标志 | Obstacle avoidance flag
-            .isObstacleDetected    = FALSE,    // 障碍检测标志 | Obstacle detected flag
-            .isBluetoothConnected  = TRUE,     // 蓝牙连接状态 | Bluetooth connection status
             .isBrake               = FALSE,    // 刹车标志 | Brake flag
             .motionState           = CAR_MOTION_STOP, // 当前运动状态 | Current motion state
             .targetLinearSpeed     = 0,        // 目标线速度 | Target linear speed
@@ -58,8 +55,8 @@ Car newCar(void) {
     c.encoder_r = newEncoder(&ENCODER_R_TIM, TIM_CHANNEL_ALL);
 
     // 初始化并启用 IMU | Initialize and enable IMU
-//    c.imu = newImu();
-//    c.imu.Enable(&c.imu);
+    c.imu = newImu();
+    c.imu.Enable(&c.imu);
 
     // 绑定移动函数 | Bind move function
     c.CarMove = CarMove;

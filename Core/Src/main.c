@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "dma.h"
+#include "i2c.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -96,9 +97,9 @@ int main(void)
   MX_TIM2_Init();
   MX_TIM3_Init();
   MX_TIM9_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
   car = newCar();
-
   HAL_TIM_Base_Start_IT(&htim9);
 
   /* USER CODE END 2 */
@@ -110,11 +111,11 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    car.motor_l.Move(&car.motor_l,0,-50);
-    car.motor_r.Move(&car.motor_r,0,-50);
-//    car.encoder_l.GetCountAndRpm(&car.encoder_l);
-//    car.encoder_r.GetCountAndRpm(&car.encoder_r);
-    uart_printf(&huart2,"%d,%f\n",car.encoder_l.rpm,car.motor_l.setRPM);
+    car.motor_l.Move(&car.motor_l,0,50);
+    car.motor_r.Move(&car.motor_r,0,50);
+    car.imu.Get_Data(&car.imu);
+//    uart_printf(&huart2,"%d,%f,%f\n",car.encoder_l.rpm,car.motor_l.setRPM,car.motor_r.pid.out);
+    uart_printf(&huart2,"%f,%d\n",car.imu.roll,car.encoder_l.count);
   }
   /* USER CODE END 3 */
 }

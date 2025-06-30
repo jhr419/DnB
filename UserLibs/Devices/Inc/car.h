@@ -58,9 +58,6 @@ typedef struct Car Car;
   */
 struct Car {
     /* 状态标志 | Status flags */
-    bool_t isObstacleAvoidanceOn;   /**< 障碍规避开启 | Obstacle avoidance enabled */
-    bool_t isObstacleDetected;      /**< 障碍检测到 | Obstacle detected */
-    bool_t isBluetoothConnected;    /**< 蓝牙连接状态 | Bluetooth connection status */
     bool_t isBrake;                 /**< 刹车标志 | Brake flag */
 
     /* 运动参数 | Motion parameters */
@@ -77,7 +74,7 @@ struct Car {
     Motor   motor_r;                /**< 右电机实例 | Right motor instance */
     Encoder encoder_l;              /**< 左编码器实例 | Left encoder instance */
     Encoder encoder_r;              /**< 右编码器实例 | Right encoder instance */
-//    Imu     imu;                    /**< IMU 传感器实例 | IMU sensor instance */
+    Imu     imu;                    /**< IMU 传感器实例 | IMU sensor instance */
 
     /* 方法指针 | Method pointer */
     void (*CarMove)(Car *self, int8_t setSpeed);

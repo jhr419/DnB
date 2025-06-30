@@ -1,86 +1,93 @@
-cmake_minimum_required(VERSION 3.22)
+#此文件从模板自动生成! 请勿更改!
+set(CMAKE_SYSTEM_NAME Generic)
+set(CMAKE_SYSTEM_VERSION 1)
+cmake_minimum_required(VERSION 3.31)
 
-#
-# This file is generated only once,
-# and is not re-generated if converter is called multiple times.
-#
-# User is free to modify the file as much as necessary
-#
+# specify cross-compilers and tools
+set(CMAKE_C_COMPILER arm-none-eabi-gcc)
+set(CMAKE_CXX_COMPILER arm-none-eabi-g++)
+set(CMAKE_ASM_COMPILER  arm-none-eabi-gcc)
+set(CMAKE_AR arm-none-eabi-ar)
+set(CMAKE_OBJCOPY arm-none-eabi-objcopy)
+set(CMAKE_OBJDUMP arm-none-eabi-objdump)
+set(SIZE arm-none-eabi-size)
+set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
-# Setup compiler settings
+# project settings
+project(DnB C CXX ASM)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD 11)
-set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_C_EXTENSIONS ON)
 
-# Define the build type
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Debug")
-endif()
+#Uncomment for hardware floating point
+#add_compile_definitions(ARM_MATH_CM4;ARM_MATH_MATRIX_CHECK;ARM_MATH_ROUNDING)
+#add_compile_options(-mfloat-abi=hard -mfpu=fpv4-sp-d16)
+#add_link_options(-mfloat-abi=hard -mfpu=fpv4-sp-d16)
 
-# Set the project name
-set(CMAKE_PROJECT_NAME DnB)
+#Uncomment for software floating point
+#add_compile_options(-mfloat-abi=soft)
 
-# Include toolchain file
-include("cmake/gcc-arm-none-eabi.cmake")
+add_compile_options(-mcpu=cortex-m4 -mthumb -mthumb-interwork)
+add_compile_options(-ffunction-sections -fdata-sections -fno-common -fmessage-length=0)
 
-# Enable compile command to ease indexing with e.g. clangd
-set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
+# uncomment to mitigate c++17 absolute addresses warnings
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-register")
 
-# Core project settings
-project(${CMAKE_PROJECT_NAME})
-message("Build type: " ${CMAKE_BUILD_TYPE})
+# Enable assembler files preprocessing
+add_compile_options($<$<COMPILE_LANGUAGE:ASM>:-x$<SEMICOLON>assembler-with-cpp>)
 
-# Enable CMake support for ASM and C languages
-enable_language(C ASM)
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    message(STATUS "Maximum optimization for speed")
+    add_compile_options(-Ofast)
+elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "RelWithDebInfo")
+    message(STATUS "Maximum optimization for speed, debug info included")
+    add_compile_options(-Ofast -g)
+elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "MinSizeRel")
+    message(STATUS "Maximum optimization for size")
+    add_compile_options(-Os)
+else ()
+    message(STATUS "Minimal optimization, debug info included")
+    add_compile_options(-Og -g)
+endif ()
 
-# Create an executable object type
-add_executable(${CMAKE_PROJECT_NAME})
+include_directories(Core/Inc Drivers/STM32F4xx_HAL_Driver/Inc Drivers/STM32F4xx_HAL_Driver/Inc/Legacy Drivers/CMSIS/Device/ST/STM32F4xx/Include Drivers/CMSIS/Include
+        UserLibs/Algorithm/Inc
+        UserLibs/Bsp/Inc
+        UserLibs/Controller/Inc
+        UserLibs/Devices/Inc
+        UserLibs/Support/Inc
+        UserLibs/Tasks/Inc)
 
-# Add STM32CubeMX generated sources
-add_subdirectory(cmake/stm32cubemx)
+add_definitions(-DDEBUG -DUSE_HAL_DRIVER -DSTM32F446xx)
 
-# Link directories setup
-target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined library search paths
-)
+file(GLOB_RECURSE SOURCES "Core/*.*" "Drivers/*.*")
 
-# Add sources to executable
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user sources here
-#        ../DnB/UserLibs/Bsp/Src/inv_mpu.c
-#        ../DnB/UserLibs/Bsp/Src/inv_mpu.c
-#        ../DnB/UserLibs/Bsp/Src/inv_mpu_dmp_motion_driver.c
-#        ../DnB/UserLibs/Bsp/Src/MPU6500.c
+set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/STM32F446RETX_FLASH.ld)
+
+add_link_options(-Wl,-gc-sections,--print-memory-usage,-Map=${PROJECT_BINARY_DIR}/${PROJECT_NAME}.map)
+add_link_options(-mcpu=cortex-m4 -mthumb -mthumb-interwork)
+add_link_options(-T ${LINKER_SCRIPT})
+
+add_executable(${PROJECT_NAME}.elf ${SOURCES} ${LINKER_SCRIPT}
+        ../DnB/UserLibs/Bsp/Src/inv_mpu.c
+        ../DnB/UserLibs/Bsp/Src/inv_mpu.c
+        ../DnB/UserLibs/Bsp/Src/inv_mpu_dmp_motion_driver.c
+        ../DnB/UserLibs/Bsp/Src/MPU6500.c
+        ../DnB/UserLibs/Devices/Src/imu.c
         ../DnB/UserLibs/Controller/Src/pid.c
         ../DnB/UserLibs/Devices/Src/car.c
         ../DnB/UserLibs/Devices/Src/encoder.c
-#        ../DnB/UserLibs/Devices/Src/imu.c
         ../DnB/UserLibs/Devices/Src/motor.c
         ../DnB/UserLibs/Support/Src/communication.c
-#        ../DnB/UserLibs/Support/Src/delay.c
-#        ../DnB/UserLibs/Tasks/Src/carTask.c
-#        ../DnB/UserLibs/Tasks/Src/multiTask.c
-)
+        #        ../DnB/UserLibs/Support/Src/delay.c
+        #        ../DnB/UserLibs/Tasks/Src/carTask.c
+        #        ../DnB/UserLibs/Tasks/Src/multiTask.c
+        )
 
-# Add include paths
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined include paths
-        ../DnB/UserLibs/Algorithm/Inc
-        ../DnB/UserLibs/Bsp/Inc
-        ../DnB/UserLibs/Controller/Inc
-        ../DnB/UserLibs/Devices/Inc
-        ../DnB/UserLibs/Support/Inc
-        ../DnB/UserLibs/Tasks/Inc
-)
+set(HEX_FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.hex)
+set(BIN_FILE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}.bin)
 
-# Add project symbols (macros)
-target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined symbols
-)
-
-# Add linked libraries
-target_link_libraries(${CMAKE_PROJECT_NAME}
-    stm32cubemx
-
-    # Add user defined libraries
-)
+add_custom_command(TARGET ${PROJECT_NAME}.elf POST_BUILD
+        COMMAND ${CMAKE_OBJCOPY} -Oihex $<TARGET_FILE:${PROJECT_NAME}.elf> ${HEX_FILE}
+        COMMAND ${CMAKE_OBJCOPY} -Obinary $<TARGET_FILE:${PROJECT_NAME}.elf> ${BIN_FILE}
+        COMMENT "Building ${HEX_FILE}
+Building ${BIN_FILE}")
